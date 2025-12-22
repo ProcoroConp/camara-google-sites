@@ -1,162 +1,205 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Momento Surreal – Desafío Dalí</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Momento Surreal – Desafío Dalí</title>
 
-<style>
-body {
-  font-family: Oswald, sans-serif;
-  text-align: center;
-  padding: 15px;
-}
+  <!-- Fuente Oswald -->
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400&display=swap" rel="stylesheet">
 
-.barra {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      font-family: 'Oswald', sans-serif;
+      color: #fff;
+      text-align: center;
+    }
 
-.barra img {
-  height: 40px;
-}
+    .app {
+      position: relative;
+      max-width: 420px;
+      margin: auto;
+      padding-bottom: 12px;
+    }
 
-video, canvas {
-  width: 100%;
-  max-width: 360px;
-  border-radius: 14px;
-  margin-top: 10px;
-}
+    video, canvas {
+      width: 100%;
+      border-radius: 18px;
+      background: #000;
+    }
 
-.controls {
-  text-align: left;
-  max-width: 360px;
-  margin: 15px auto;
-}
+    canvas {
+      display: none;
+    }
 
-.controls label {
-  display: block;
-  margin-bottom: 6px;
-}
+    /* LOGO */
+    .top-bar {
+      position: absolute;
+      top: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      z-index: 10;
+    }
 
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 8px;
-  background: #c4007a;
-  color: #00;
-  border-radius: 8px;
-  border: none;
-  font-size: 16px;
-}
-</style>
+    .logo {
+      width: 150px;
+      opacity: 0.95;
+    }
+
+    /* TEXTO */
+    .overlay-text {
+      position: absolute;
+      top: 80px;
+      width: 100%;
+      font-size: 22px;
+      font-style: italic;
+      letter-spacing: 0.5px;
+      z-index: 10;
+      pointer-events: none;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+    }
+
+    /* BOTONES */
+    button {
+      background: #C4007A;
+      color: #000;
+      border: none;
+      padding: 6px 14px;
+      margin: 5px;
+      font-size: 13px;
+      border-radius: 16px;
+      cursor: pointer;
+    }
+
+    .controls {
+      margin-top: 8px;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- Barra fija -->
-<div class="barra">
-  <img src="logo.png">
-  <strong>Desafío Dalí</strong>
+<div class="app">
+
+  <!-- LOGO -->
+  <div class="top-bar">
+    <img src="logo.png" class="logo" alt="Desafío Dalí">
+  </div>
+
+  <!-- TEXTO PREVIEW -->
+  <div id="overlayText" class="overlay-text">
+    Momento surreal en Desafío Dalí
+  </div>
+
+  <!-- VIDEO -->
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="canvas"></canvas>
+
+  <!-- FRASES -->
+  <div class="controls">
+    <button onclick="setPhrase(0)">Frase 1</button>
+    <button onclick="setPhrase(1)">Frase 1 · Oscuro</button>
+    <button onclick="setPhrase(2)">Frase 2</button>
+    <button onclick="setPhrase(3)">Frase 2 · Oscuro</button>
+    <button onclick="setPhrase(4)">Frase 3</button>
+    <button onclick="setPhrase(5)">Frase 3 · Oscuro</button>
+  </div>
+
+  <!-- ACCIONES -->
+  <div class="controls">
+    <button onclick="switchCamera()">Cambiar cámara</button>
+    <button onclick="takePhoto()">Tomar foto</button>
+  </div>
+
 </div>
-
-<video id="video" autoplay playsinline></video>
-<canvas id="canvas" style="display:none;"></canvas>
-
-<button onclick="abrirCamara()">Abrir cámara</button>
-<button onclick="tomarFoto()">Tomar foto</button>
-
-<!-- Selector de frases -->
-<div class="controls">
-  <strong>Elige la frase</strong>
-
-  <label><input type="radio" name="fraseBase" value="frase1" checked> Momento surreal en Desafío Dalí</label>
-  <label><input type="radio" name="fraseBase" value="frase2"> Vive el genio del surrealismo</label>
-  <label><input type="radio" name="fraseBase" value="frase3"> Una experiencia fuera de la realidad</label>
-
-  <br>
-  <strong>Elige el color</strong>
-
-  <label><input type="radio" name="color" value="a" checked> Color A</label>
-  <label><input type="radio" name="color" value="b"> Color B</label>
-
-  <label><input type="radio" name="fraseBase" value=""> Sin texto</label>
-</div>
-
-<button onclick="renderFinal()">Ver preview</button>
-<button onclick="descargarCompartir()">Descargar / Compartir</button>
 
 <script>
-let video = document.getElementById("video");
-let canvas = document.getElementById("canvas");
-let ctx = canvas.getContext("2d");
-let fotoBase = null;
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const overlay = document.getElementById("overlayText");
 
-function abrirCamara() {
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => video.srcObject = stream);
-}
+  const phrases = [
+    { text: "Momento surreal en Desafío Dalí", color: "white" },
+    { text: "Momento surreal en Desafío Dalí", color: "black" },
+    { text: "Una experiencia fuera de la realidad", color: "white" },
+    { text: "Una experiencia fuera de la realidad", color: "black" },
+    { text: "Vive el genio surrealista", color: "white" },
+    { text: "Vive el genio surrealista", color: "black" }
+  ];
 
-function tomarFoto() {
-  canvas.style.display = "block";
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  ctx.drawImage(video, 0, 0);
-  fotoBase = ctx.getImageData(0, 0, canvas.width, canvas.height);
-}
+  let selectedPhrase = phrases[0];
+  let currentFacingMode = "environment";
+  let stream;
 
-function renderFinal() {
-  if (!fotoBase) return;
+  function setPhrase(index) {
+    selectedPhrase = phrases[index];
+    overlay.innerText = selectedPhrase.text;
+    overlay.style.color = selectedPhrase.color;
+  }
 
-  ctx.putImageData(fotoBase, 0, 0);
-
-  // Logo
-  const logo = new Image();
-  logo.src = "logo.png";
-  logo.onload = () => {
-    let lw = canvas.width * 0.22;
-    let lh = logo.height * (lw / logo.width);
-    ctx.drawImage(logo, canvas.width - lw - 15, canvas.height - lh - 15, lw, lh);
-
-    // Frase imagen
-    let fraseBase = document.querySelector('input[name="fraseBase"]:checked').value;
-    let color = document.querySelector('input[name="color"]:checked').value;
-
-    if (fraseBase) {
-      let frase = new Image();
-      frase.src = `${fraseBase}_${color}.png`;
-      frase.onload = () => {
-        let fw = canvas.width * 0.7;
-        let fh = frase.height * (fw / frase.width);
-        ctx.drawImage(frase, (canvas.width - fw) / 2, canvas.height - fh - 30, fw, fh);
-      };
+  function startCamera() {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
     }
-  };
-}
 
-function descargarCompartir() {
-  canvas.toBlob(blob => {
-    let file = new File([blob], "momento-dali.png", { type: "image/png" });
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: currentFacingMode },
+      audio: false
+    })
+    .then(s => {
+      stream = s;
+      video.srcObject = stream;
+    })
+    .catch(err => {
+      alert("No se pudo acceder a la cámara");
+      console.error(err);
+    });
+  }
 
-    if (navigator.share) {
-      navigator.share({
-        files: [file],
-        title: "Momento surreal",
-        text: "Viví Desafío Dalí"
-      });
-    } else {
-      let a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "momento-dali.png";
-      a.click();
-    }
-  });
-}
+  function switchCamera() {
+    currentFacingMode = currentFacingMode === "user" ? "environment" : "user";
+    startCamera();
+  }
+
+  function takePhoto() {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    ctx.drawImage(video, 0, 0);
+
+    ctx.font = "italic 36px 'Oswald'";
+    ctx.fillStyle = selectedPhrase.color;
+    ctx.textAlign = "center";
+    ctx.fillText(
+      selectedPhrase.text,
+      canvas.width / 2,
+      70
+    );
+
+    const logo = new Image();
+    logo.src = "logo.png";
+    logo.onload = () => {
+      const size = 180;
+      ctx.drawImage(
+        logo,
+        canvas.width / 2 - size / 2,
+        canvas.height / 2 - size / 2,
+        size,
+        size
+      );
+
+      canvas.style.display = "block";
+      video.style.display = "none";
+    };
+  }
+
+  // INICIAR
+  startCamera();
 </script>
 
 </body>
 </html>
-
