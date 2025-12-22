@@ -15,19 +15,20 @@ body {
 video, canvas {
   width: 100%;
   max-width: 360px;
-  border-radius: 12px;
+  border-radius: 14px;
   margin-top: 10px;
 }
 
 button {
   padding: 12px 18px;
-  margin: 10px;
+  margin: 8px;
   font-size: 16px;
   background: #000;
   color: #fff;
-  border: none;
   border-radius: 8px;
+  border: none;
 }
+
 </style>
 </head>
 
@@ -42,8 +43,9 @@ button {
 
 <button onclick="abrirCamara()">Abrir cámara</button>
 <button onclick="tomarFoto()">Tomar foto</button>
+<button onclick="compartirFoto()">Compartir</button>
 
-<a id="descargar" download="foto.png" style="display:none;">Descargar imagen</a>
+<a id="descargar" download="foto-con-logo.png" style="display:none;">Descargar imagen</a>
 
 <script>
 let video = document.getElementById("video");
@@ -52,12 +54,7 @@ let descargar = document.getElementById("descargar");
 
 function abrirCamara() {
   navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-      video.srcObject = stream;
-    })
-    .catch(() => {
-      alert("No se pudo acceder a la cámara");
-    });
+    .then(stream => video.srcObject = stream);
 }
 
 function tomarFoto() {
@@ -65,11 +62,46 @@ function tomarFoto() {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   let ctx = canvas.getContext("2d");
+
+  // Dibuja la foto
   ctx.drawImage(video, 0, 0);
-  descargar.href = canvas.toDataURL("image/png");
-  descargar.style.display = "block";
+
+  // Agrega logo
+  let logo = new Image();
+  logo.src = "logo.png";
+  logo.onload = () => {
+    let logoWidth = canvas.width * 0.25;
+    let logoHeight = logo.height * (logoWidth / logo.width);
+    ctx.drawImage(
+      logo,
+      canvas.width - logoWidth - 15,
+      canvas.height - logoHeight - 15,
+      logoWidth,
+      logoHeight
+    );
+
+    descargar.href = canvas.toDataURL("image/png");
+    descargar.style.display = "block";
+  };
+}
+
+function compartirFoto() {
+  canvas.toBlob(blob => {
+    let file = new File([blob], "foto.png", { type: "image/png" });
+
+    if (navigator.share) {
+      navigator.share({
+        files: [file],
+        title: "Mi foto",
+        text: "Tomé esta foto"
+      });
+    } else {
+      alert("Tu dispositivo no soporta compartir directo");
+    }
+  });
 }
 </script>
 
 </body>
 </html>
+
