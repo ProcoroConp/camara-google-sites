@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cámara</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+}
+
+video, canvas {
+  width: 100%;
+  max-width: 360px;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+button {
+  padding: 12px 18px;
+  margin: 10px;
+  font-size: 16px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<h3>Tomar foto</h3>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas" style="display:none;"></canvas>
+
+<br>
+
+<button onclick="abrirCamara()">Abrir cámara</button>
+<button onclick="tomarFoto()">Tomar foto</button>
+
+<a id="descargar" download="foto.png" style="display:none;">Descargar imagen</a>
+
+<script>
+let video = document.getElementById("video");
+let canvas = document.getElementById("canvas");
+let descargar = document.getElementById("descargar");
+
+function abrirCamara() {
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      video.srcObject = stream;
+    })
+    .catch(() => {
+      alert("No se pudo acceder a la cámara");
+    });
+}
+
+function tomarFoto() {
+  canvas.style.display = "block";
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  let ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0);
+  descargar.href = canvas.toDataURL("image/png");
+  descargar.style.display = "block";
+}
+</script>
+
+</body>
+</html>
