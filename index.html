@@ -3,13 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cámara</title>
+<title>Momento Surreal – Desafío Dalí</title>
 
 <style>
 body {
   font-family: Arial, sans-serif;
   text-align: center;
-  padding: 20px;
+  padding: 15px;
+}
+
+.barra {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.barra img {
+  height: 40px;
 }
 
 video, canvas {
@@ -19,38 +31,69 @@ video, canvas {
   margin-top: 10px;
 }
 
+.controls {
+  text-align: left;
+  max-width: 360px;
+  margin: 15px auto;
+}
+
+.controls label {
+  display: block;
+  margin-bottom: 6px;
+}
+
 button {
-  padding: 12px 18px;
-  margin: 8px;
-  font-size: 16px;
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
   background: #000;
   color: #fff;
   border-radius: 8px;
   border: none;
+  font-size: 16px;
 }
-
 </style>
 </head>
 
 <body>
 
-<h3>Tomar foto</h3>
+<!-- Barra fija -->
+<div class="barra">
+  <img src="logo.png">
+  <strong>Desafío Dalí</strong>
+</div>
 
 <video id="video" autoplay playsinline></video>
 <canvas id="canvas" style="display:none;"></canvas>
 
-<br>
-
 <button onclick="abrirCamara()">Abrir cámara</button>
 <button onclick="tomarFoto()">Tomar foto</button>
-<button onclick="compartirFoto()">Compartir</button>
 
-<a id="descargar" download="foto-con-logo.png" style="display:none;">Descargar imagen</a>
+<!-- Selector de frases -->
+<div class="controls">
+  <strong>Elige la frase</strong>
+
+  <label><input type="radio" name="fraseBase" value="frase1" checked> Momento surreal en Desafío Dalí</label>
+  <label><input type="radio" name="fraseBase" value="frase2"> Vive el genio del surrealismo</label>
+  <label><input type="radio" name="fraseBase" value="frase3"> Una experiencia fuera de la realidad</label>
+
+  <br>
+  <strong>Elige el color</strong>
+
+  <label><input type="radio" name="color" value="a" checked> Color A</label>
+  <label><input type="radio" name="color" value="b"> Color B</label>
+
+  <label><input type="radio" name="fraseBase" value=""> Sin texto</label>
+</div>
+
+<button onclick="renderFinal()">Ver preview</button>
+<button onclick="descargarCompartir()">Descargar / Compartir</button>
 
 <script>
 let video = document.getElementById("video");
 let canvas = document.getElementById("canvas");
-let descargar = document.getElementById("descargar");
+let ctx = canvas.getContext("2d");
+let fotoBase = null;
 
 function abrirCamara() {
   navigator.mediaDevices.getUserMedia({ video: true })
@@ -61,42 +104,54 @@ function tomarFoto() {
   canvas.style.display = "block";
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-  let ctx = canvas.getContext("2d");
-
-  // Dibuja la foto
   ctx.drawImage(video, 0, 0);
+  fotoBase = ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
 
-  // Agrega logo
-  let logo = new Image();
+function renderFinal() {
+  if (!fotoBase) return;
+
+  ctx.putImageData(fotoBase, 0, 0);
+
+  // Logo
+  const logo = new Image();
   logo.src = "logo.png";
   logo.onload = () => {
-    let logoWidth = canvas.width * 0.25;
-    let logoHeight = logo.height * (logoWidth / logo.width);
-    ctx.drawImage(
-      logo,
-      canvas.width - logoWidth - 15,
-      canvas.height - logoHeight - 15,
-      logoWidth,
-      logoHeight
-    );
+    let lw = canvas.width * 0.22;
+    let lh = logo.height * (lw / logo.width);
+    ctx.drawImage(logo, canvas.width - lw - 15, canvas.height - lh - 15, lw, lh);
 
-    descargar.href = canvas.toDataURL("image/png");
-    descargar.style.display = "block";
+    // Frase imagen
+    let fraseBase = document.querySelector('input[name="fraseBase"]:checked').value;
+    let color = document.querySelector('input[name="color"]:checked').value;
+
+    if (fraseBase) {
+      let frase = new Image();
+      frase.src = `${fraseBase}_${color}.png`;
+      frase.onload = () => {
+        let fw = canvas.width * 0.7;
+        let fh = frase.height * (fw / frase.width);
+        ctx.drawImage(frase, (canvas.width - fw) / 2, canvas.height - fh - 30, fw, fh);
+      };
+    }
   };
 }
 
-function compartirFoto() {
+function descargarCompartir() {
   canvas.toBlob(blob => {
-    let file = new File([blob], "foto.png", { type: "image/png" });
+    let file = new File([blob], "momento-dali.png", { type: "image/png" });
 
     if (navigator.share) {
       navigator.share({
         files: [file],
-        title: "Mi foto",
-        text: "Tomé esta foto"
+        title: "Momento surreal",
+        text: "Viví Desafío Dalí"
       });
     } else {
-      alert("Tu dispositivo no soporta compartir directo");
+      let a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "momento-dali.png";
+      a.click();
     }
   });
 }
