@@ -1,94 +1,181 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Foto Surreal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Foto Surreal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: Arial, Helvetica, sans-serif;
-    }
+<style>
+body {
+  margin: 0;
+  background: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
 
-    body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      color: #fff;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+.screen {
+  display: none;
+  height: 100vh;
+  padding: 20px;
+}
 
-    .container {
-      text-align: center;
-      max-width: 600px;
-      padding: 30px;
-    }
+.screen.active {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 
-    .logo {
-      width: 200px;
-      margin-bottom: 30px;
-    }
+.logo {
+  width: 180px;
+  margin-bottom: 30px;
+}
 
-    h1 {
-      font-size: 40px;
-      margin-bottom: 20px;
-      font-weight: bold;
-    }
+button {
+  background: #c4007a;
+  color: #000;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  margin: 8px;
+  cursor: pointer;
+}
 
-    p {
-      font-size: 22px;
-      line-height: 1.5;
-      margin-bottom: 18px;
-      opacity: 0.9;
-    }
+video, canvas {
+  max-width: 100%;
+}
 
-    .steps {
-      margin-top: 30px;
-      text-align: left;
-      font-size: 20px;
-    }
+#camera-container {
+  position: relative;
+}
 
-    .steps div {
-      margin-bottom: 14px;
-    }
+.overlay-text {
+  position: absolute;
+  top: 10px;
+  width: 100%;
+  text-align: center;
+}
 
-    .highlight {
-      color: #ff00aa;
-      font-weight: bold;
-    }
-  </style>
+.overlay-text img {
+  width: 80%;
+}
+
+.overlay-logo {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+}
+
+.overlay-logo img {
+  width: 120px;
+}
+</style>
 </head>
 
 <body>
 
-  <div class="container">
+<!-- PANTALLA 1 -->
+<div id="intro" class="screen active">
+  <img src="logo.png" class="logo">
+  <h1>Tómate una foto surreal</h1>
+  <p>Colócate frente a la cámara<br>y forma parte de la obra</p>
+  <button onclick="startCamera()">Activar cámara</button>
+</div>
 
-    <img src="logo.png" alt="Logo" class="logo">
+<!-- PANTALLA 2 -->
+<div id="camera" class="screen">
+  <div id="camera-container">
+    <video id="video" autoplay playsinline></video>
 
-    <h1>Tómate una foto surreal</h1>
-
-    <p>
-      Entra al universo donde la realidad se dobla,<br>
-      el tiempo se derrite<br>
-      y tú eres parte de la obra.
-    </p>
-
-    <div class="steps">
-      <div>1️⃣ Colócate frente a la pantalla.</div>
-      <div>2️⃣ Activa la cámara de tu dispositivo.</div>
-      <div>3️⃣ Tómate una foto con el entorno surreal.</div>
-      <div>4️⃣ Descárgala y <span class="highlight">compártela</span>.</div>
+    <div class="overlay-text">
+      <img src="frase1_a.png">
     </div>
 
-    <p style="margin-top:30px; font-size:18px; opacity:0.7;">
-      Vive el momento. Guárdalo. Hazlo eterno.
-    </p>
-
+    <div class="overlay-logo">
+      <img src="logo.png">
+    </div>
   </div>
+
+  <div>
+    <button onclick="takePhoto()">Tomar foto</button>
+    <button onclick="switchCamera()">Cambiar cámara</button>
+  </div>
+</div>
+
+<!-- PANTALLA 3 -->
+<div id="result" class="screen">
+  <canvas id="canvas"></canvas>
+  <div>
+    <a id="download" download="foto-surreal.png">
+      <button>Descargar</button>
+    </a>
+    <button onclick="resetAll()">Repetir</button>
+  </div>
+</div>
+
+<script>
+let video = document.getElementById("video");
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+let stream;
+let useFront = false;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startCamera() {
+  showScreen("camera");
+  openCamera();
+}
+
+function openCamera() {
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+  }
+
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: useFront ? "user" : "environment" },
+    audio: false
+  }).then(s => {
+    stream = s;
+    video.srcObject = s;
+  });
+}
+
+function switchCamera() {
+  useFront = !useFront;
+  openCamera();
+}
+
+function takePhoto() {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  ctx.drawImage(video, 0, 0);
+
+  let frase = new Image();
+  frase.src = "frase1_a.png";
+  frase.onload = () => {
+    ctx.drawImage(frase, canvas.width * 0.1, 20, canvas.width * 0.8, frase.height);
+
+    let logo = new Image();
+    logo.src = "logo.png";
+    logo.onload = () => {
+      ctx.drawImage(logo, canvas.width / 2 - 60, canvas.height - 140, 120, 120);
+      document.getElementById("download").href = canvas.toDataURL("image/png");
+      showScreen("result");
+    };
+  };
+}
+
+function resetAll() {
+  showScreen("intro");
+}
+</script>
 
 </body>
 </html>
