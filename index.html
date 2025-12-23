@@ -27,8 +27,9 @@ body {
   align-items: center;
 }
 
-.logo {
-  width: 180px;
+.logo-intro {
+  max-width: 220px;
+  height: auto;
   margin-bottom: 30px;
 }
 
@@ -42,34 +43,31 @@ button {
   cursor: pointer;
 }
 
-video, canvas {
-  max-width: 100%;
-}
-
 #camera-container {
   position: relative;
-}
-
-.overlay-text {
-  position: absolute;
-  top: 10px;
   width: 100%;
-  text-align: center;
 }
 
-.overlay-text img {
-  width: 80%;
+video {
+  width: 100%;
+  max-height: 70vh;
 }
 
 .overlay-logo {
   position: absolute;
-  bottom: 10px;
+  bottom: 12px;
   width: 100%;
-  text-align: center;
+  display: flex;
+  justify-content: center;
 }
 
 .overlay-logo img {
-  width: 120px;
+  max-width: 140px;
+  height: auto;
+}
+
+canvas {
+  max-width: 100%;
 }
 </style>
 </head>
@@ -78,9 +76,9 @@ video, canvas {
 
 <!-- PANTALLA 1 -->
 <div id="intro" class="screen active">
-  <img src="logo.png" class="logo">
+  <img src="logo.png" class="logo-intro">
   <h1>Tómate una foto surreal</h1>
-  <p>Colócate frente a la cámara<br>y forma parte de la obra</p>
+  <p>Colócate frente a la cámara<br>y guarda tu momento</p>
   <button onclick="startCamera()">Activar cámara</button>
 </div>
 
@@ -89,12 +87,8 @@ video, canvas {
   <div id="camera-container">
     <video id="video" autoplay playsinline></video>
 
-    <div class="overlay-text">
-      <img src="frase1_a.png">
-    </div>
-
     <div class="overlay-logo">
-      <img src="logo.png">
+      <img src="logo.png" id="logoOverlay">
     </div>
   </div>
 
@@ -108,7 +102,7 @@ video, canvas {
 <div id="result" class="screen">
   <canvas id="canvas"></canvas>
   <div>
-    <a id="download" download="foto-surreal.png">
+    <a id="download" download="foto-desafio-dali.png">
       <button>Descargar</button>
     </a>
     <button onclick="resetAll()">Repetir</button>
@@ -133,9 +127,7 @@ function startCamera() {
 }
 
 function openCamera() {
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
-  }
+  if (stream) stream.getTracks().forEach(t => t.stop());
 
   navigator.mediaDevices.getUserMedia({
     video: { facingMode: useFront ? "user" : "environment" },
@@ -157,18 +149,23 @@ function takePhoto() {
 
   ctx.drawImage(video, 0, 0);
 
-  let frase = new Image();
-  frase.src = "frase1_a.png";
-  frase.onload = () => {
-    ctx.drawImage(frase, canvas.width * 0.1, 20, canvas.width * 0.8, frase.height);
+  let logo = new Image();
+  logo.src = "logo.png";
+  logo.onload = () => {
+    let logoWidth = canvas.width * 0.25;
+    let ratio = logo.height / logo.width;
+    let logoHeight = logoWidth * ratio;
 
-    let logo = new Image();
-    logo.src = "logo.png";
-    logo.onload = () => {
-      ctx.drawImage(logo, canvas.width / 2 - 60, canvas.height - 140, 120, 120);
-      document.getElementById("download").href = canvas.toDataURL("image/png");
-      showScreen("result");
-    };
+    ctx.drawImage(
+      logo,
+      canvas.width / 2 - logoWidth / 2,
+      canvas.height - logoHeight - 20,
+      logoWidth,
+      logoHeight
+    );
+
+    document.getElementById("download").href = canvas.toDataURL("image/png");
+    showScreen("result");
   };
 }
 
