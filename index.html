@@ -1,194 +1,263 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Momento Surreal – Desafío Dalí</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Momento Surreal – Desafío Dalí</title>
 
-  <style>
-    body {
-      margin: 0;
-      background: #000;
-      font-family: Arial, sans-serif;
-      text-align: center;
-    }
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400&display=swap" rel="stylesheet">
 
-    .app {
-      position: relative;
-      max-width: 420px;
-      margin: auto;
-    }
+<style>
+body {
+  margin: 0;
+  background: black;
+  color: white;
+  font-family: 'Oswald', sans-serif;
+  text-align: center;
+}
 
-    video, canvas {
-      width: 100%;
-      border-radius: 18px;
-      background: #000;
-    }
+/* Pantallas */
+.screen {
+  display: none;
+  padding: 20px;
+}
+.screen.active {
+  display: block;
+}
 
-    canvas {
-      display: none;
-    }
+/* Frases */
+.frases img {
+  width: 85%;
+  margin: 12px 0;
+  border: 2px solid transparent;
+}
+.frases img.selected {
+  border-color: #c4007a;
+}
 
-    /* FRASE ARRIBA */
-    .frase {
-      position: absolute;
-      top: 20px;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      z-index: 10;
-      pointer-events: none;
-    }
+/* Botones */
+button {
+  background: #c4007a;
+  color: black;
+  border: none;
+  padding: 10px 18px;
+  font-size: 15px;
+  margin: 8px;
+}
 
-    .frase img {
-      width: 90%;
-      max-width: 360px;
-    }
+/* Cámara */
+video {
+  width: 100%;
+  transition: opacity 0.3s ease;
+}
 
-    /* LOGO ABAJO */
-    .logo {
-      position: absolute;
-      bottom: 20px;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      z-index: 10;
-      pointer-events: none;
-    }
+/* Imagen final */
+img.final {
+  width: 100%;
+}
 
-    .logo img {
-      width: 160px;
-      opacity: 0.95;
-    }
+/* Aviso */
+.notice {
+  font-size: 14px;
+  opacity: 0.8;
+  margin-top: 10px;
+}
 
-    /* BOTONES */
-    button {
-      background: #C4007A;
-      color: #000;
-      border: none;
-      padding: 6px 14px;
-      margin: 4px;
-      font-size: 13px;
-      border-radius: 14px;
-      cursor: pointer;
-    }
+/* Animación pincelada */
+#brushOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 999;
+}
 
-    .controls {
-      margin: 8px 0;
-    }
-  </style>
+.brush {
+  position: absolute;
+  width: 120%;
+  height: 120px;
+  background: white;
+  opacity: 0.15;
+  transform: rotate(-5deg) translateX(-100%);
+  animation: brushMove 0.6s ease forwards;
+}
+
+@keyframes brushMove {
+  to {
+    transform: rotate(-5deg) translateX(100%);
+  }
+}
+</style>
 </head>
 
 <body>
 
-<div class="app">
+<!-- OVERLAY PINCELADA -->
+<div id="brushOverlay"></div>
 
-  <!-- FRASE -->
-  <div class="frase">
-    <img id="fraseImg" src="frase1_a.png" alt="Frase">
+<!-- PANTALLA 1 -->
+<div class="screen active" id="screen1">
+  <h2>Elige tu frase</h2>
+  <div class="frases">
+    <img src="frases/frase1_a.png" onclick="selectFrase(this)">
+    <img src="frases/frase1_b.png" onclick="selectFrase(this)">
+    <img src="frases/frase2_a.png" onclick="selectFrase(this)">
   </div>
+  <button onclick="goToCamera()">Siguiente</button>
+</div>
 
-  <!-- LOGO -->
-  <div class="logo">
-    <img src="logo.png" alt="Desafío Dalí">
+<!-- PANTALLA 2 -->
+<div class="screen" id="screen2">
+  <video id="video" autoplay playsinline></video>
+  <div>
+    <button onclick="switchCamera()">Cambiar cámara</button>
+    <button onclick="takePhoto()">Tomar foto</button>
   </div>
-
-  <!-- CAMARA -->
-  <video id="video" autoplay playsinline muted></video>
-  <canvas id="canvas"></canvas>
-
 </div>
 
-<!-- BOTONES -->
-<div class="controls">
-  <button onclick="setFrase(0)">Frase 1 A</button>
-  <button onclick="setFrase(1)">Frase 1 B</button>
-  <button onclick="setFrase(2)">Frase 2 A</button>
-  <button onclick="setFrase(3)">Frase 2 B</button>
-  <button onclick="setFrase(4)">Frase 3 A</button>
-  <button onclick="setFrase(5)">Frase 3 B</button>
+<!-- PANTALLA 3 -->
+<div class="screen" id="screen3">
+  <img id="finalImage" class="final">
+  <button onclick="openImage()">Guardar imagen</button>
+  <div class="notice">Mantén presionada la imagen para guardarla</div>
 </div>
 
-<div class="controls">
-  <button onclick="switchCamera()">Cambiar cámara</button>
-  <button onclick="takePhoto()">Tomar foto</button>
-</div>
+<canvas id="canvas" style="display:none;"></canvas>
 
 <script>
-  const video = document.getElementById("video");
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-  const fraseImg = document.getElementById("fraseImg");
+let selectedFrase = null;
+let useFront = false;
+let resetTimer = null;
 
-  const frases = [
-    "frase1_a.png",
-    "frase1_b.png",
-    "frase2_a.png",
-    "frase2_b.png",
-    "frase3_a.png",
-    "frase3_b.png"
-  ];
+const video = document.getElementById('video');
 
-  let currentCamera = "environment";
-  let stream;
+/* Navegación */
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen' + n).classList.add('active');
 
-  function setFrase(index) {
-    fraseImg.src = frases[index];
+  if (n === 3) {
+    resetTimer = setTimeout(resetApp, 10000);
+  } else {
+    if (resetTimer) clearTimeout(resetTimer);
   }
+}
 
-  function startCamera() {
-    if (stream) {
-      stream.getTracks().forEach(t => t.stop());
-    }
+/* Selección de frase */
+function selectFrase(img) {
+  document.querySelectorAll('.frases img').forEach(i => i.classList.remove('selected'));
+  img.classList.add('selected');
+  selectedFrase = img.src;
+}
 
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: currentCamera },
-      audio: false
-    }).then(s => {
-      stream = s;
-      video.srcObject = stream;
-    });
+/* Ir a cámara */
+function goToCamera() {
+  if (!selectedFrase) {
+    alert('Selecciona una frase');
+    return;
   }
-
-  function switchCamera() {
-    currentCamera = currentCamera === "user" ? "environment" : "user";
-    startCamera();
-  }
-
-  function takePhoto() {
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    ctx.drawImage(video, 0, 0);
-
-    // FRASE
-    const frase = new Image();
-    frase.src = fraseImg.src;
-
-    frase.onload = () => {
-      ctx.drawImage(frase, 0, 20, canvas.width, frase.height * (canvas.width / frase.width));
-
-      // LOGO
-      const logo = new Image();
-      logo.src = "logo.png";
-
-      logo.onload = () => {
-        const size = 160;
-        ctx.drawImage(
-          logo,
-          canvas.width / 2 - size / 2,
-          canvas.height - size - 20,
-          size,
-          size
-        );
-
-        canvas.style.display = "block";
-        video.style.display = "none";
-      };
-    };
-  }
-
+  showScreen(2);
   startCamera();
+}
+
+/* Cámara */
+function startCamera() {
+  video.style.opacity = 0;
+
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+  }
+
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: useFront ? "user" : "environment" },
+    audio: false
+  }).then(stream => {
+    video.srcObject = stream;
+    setTimeout(() => video.style.opacity = 1, 300);
+  });
+}
+
+function switchCamera() {
+  brushAnimation();
+  useFront = !useFront;
+  startCamera();
+}
+
+/* Foto */
+function takePhoto() {
+  brushAnimation();
+
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  ctx.drawImage(video, 0, 0);
+
+  const frase = new Image();
+  frase.src = selectedFrase;
+
+  frase.onload = () => {
+    const isHorizontal = canvas.width > canvas.height;
+    const scale = canvas.width / frase.width;
+    const fraseHeight = frase.height * scale;
+    const yPos = isHorizontal ? 40 : 0;
+
+    ctx.drawImage(frase, 0, yPos, canvas.width, fraseHeight);
+
+    const logo = new Image();
+    logo.src = 'logo.png';
+
+    logo.onload = () => {
+      const lw = canvas.width * 0.35;
+      const lh = logo.height * (lw / logo.width);
+      ctx.drawImage(
+        logo,
+        (canvas.width - lw) / 2,
+        canvas.height - lh - 20,
+        lw,
+        lh
+      );
+
+      document.getElementById('finalImage').src = canvas.toDataURL('image/png');
+      showScreen(3);
+    };
+  };
+}
+
+/* Guardar */
+function openImage() {
+  window.open(document.getElementById('finalImage').src, '_blank');
+}
+
+/* Reset */
+function resetApp() {
+  selectedFrase = null;
+  document.querySelectorAll('.frases img').forEach(i => i.classList.remove('selected'));
+  showScreen(1);
+}
+
+/* Pincelada */
+function brushAnimation() {
+  const overlay = document.getElementById('brushOverlay');
+  overlay.innerHTML = '';
+  overlay.style.opacity = 1;
+
+  for (let i = 0; i < 3; i++) {
+    const brush = document.createElement('div');
+    brush.className = 'brush';
+    brush.style.top = `${i * 140}px`;
+    brush.style.animationDelay = `${i * 0.1}s`;
+    overlay.appendChild(brush);
+  }
+
+  setTimeout(() => overlay.style.opacity = 0, 700);
+}
 </script>
 
 </body>
