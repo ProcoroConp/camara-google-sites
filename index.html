@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Elige tu frase</title>
+  <title>Foto Surreal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -24,54 +24,41 @@
 
     .container {
       text-align: center;
-      width: 100%;
-      max-width: 500px;
-      padding: 20px;
+      max-width: 600px;
+      padding: 30px;
+    }
+
+    .logo {
+      width: 200px;
+      margin-bottom: 30px;
     }
 
     h1 {
-      font-size: 42px; /* LETRA MÁS GRANDE */
-      margin-bottom: 40px;
-    }
-
-    .frases {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      margin-bottom: 40px;
-    }
-
-    .frases img {
-      width: 90px;   /* más grandes */
-      cursor: pointer;
-      opacity: 0.4;
-      transition: all 0.3s ease;
-      border: 2px solid transparent;
-    }
-
-    .frases img:hover {
-      opacity: 0.8;
-    }
-
-    .frases img.active {
-      opacity: 1;
-      border: 2px solid #ff00aa;
-      transform: scale(1.05);
-    }
-
-    button {
-      background: #ff00aa;
-      color: #000;
-      border: none;
-      padding: 16px 40px;
-      font-size: 22px; /* botón más grande */
-      cursor: pointer;
+      font-size: 40px;
+      margin-bottom: 20px;
       font-weight: bold;
     }
 
-    button:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
+    p {
+      font-size: 22px;
+      line-height: 1.5;
+      margin-bottom: 18px;
+      opacity: 0.9;
+    }
+
+    .steps {
+      margin-top: 30px;
+      text-align: left;
+      font-size: 20px;
+    }
+
+    .steps div {
+      margin-bottom: 14px;
+    }
+
+    .highlight {
+      color: #ff00aa;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -79,27 +66,29 @@
 <body>
 
   <div class="container">
-    <h1>Elige tu frase</h1>
 
-    <div class="frases">
-      <img src="frase1.png" alt="Frase 1" onclick="seleccionar(this)">
-      <img src="frase2.png" alt="Frase 2" onclick="seleccionar(this)">
-      <img src="frase3.png" alt="Frase 3" onclick="seleccionar(this)">
+    <img src="logo.png" alt="Logo" class="logo">
+
+    <h1>Tómate una foto surreal</h1>
+
+    <p>
+      Entra al universo donde la realidad se dobla,<br>
+      el tiempo se derrite<br>
+      y tú eres parte de la obra.
+    </p>
+
+    <div class="steps">
+      <div>1️⃣ Colócate frente a la pantalla.</div>
+      <div>2️⃣ Activa la cámara de tu dispositivo.</div>
+      <div>3️⃣ Tómate una foto con el entorno surreal.</div>
+      <div>4️⃣ Descárgala y <span class="highlight">compártela</span>.</div>
     </div>
 
-    <button id="btn" disabled>Siguiente</button>
+    <p style="margin-top:30px; font-size:18px; opacity:0.7;">
+      Vive el momento. Guárdalo. Hazlo eterno.
+    </p>
+
   </div>
-
-  <script>
-    function seleccionar(elemento) {
-      document.querySelectorAll('.frases img').forEach(img => {
-        img.classList.remove('active');
-      });
-
-      elemento.classList.add('active');
-      document.getElementById('btn').disabled = false;
-    }
-  </script>
 
 </body>
 </html>
